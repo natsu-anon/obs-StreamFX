@@ -179,8 +179,10 @@ jobs:
       shell: bash
       run: |
         mkdir build/package
-        cmake --build "build/temp" --config RelWithDebInfo --target PACKAGE_7Z
-        cmake --build "build/temp" --config RelWithDebInfo --target PACKAGE_ZIP
+        # cmake --build "build/temp" --config RelWithDebInfo --target PACKAGE_7Z
+        # cmake --build "build/temp" --config RelWithDebInfo --target PACKAGE_ZIP
+        cmake --build "build/ci" --config RelWithDebInfo --target PACKAGE_7Z
+        cmake --build "build/ci" --config RelWithDebInfo --target PACKAGE_ZIP
     - name: "StreamFX: Signed Installer Preparation"
       if: ${{ github.event_name != 'pull_request' }}
       id: codesign_install
