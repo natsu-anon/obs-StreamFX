@@ -9,3 +9,6 @@
 # Visual Studio
 /.vs
 /#Build
+
+# Emacs backup
+*~
