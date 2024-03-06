@@ -170,6 +170,35 @@ jobs:
         CMAKE_BUILD_TYPE: "RelWithDebInfo"
       run: |
         cmake --build "build/ci" --config ${{ env.CMAKE_BUILD_TYPE }} --target StreamFX
+    - name: "StreamFX: Package (Install Prerequisites)"
+      run: |
+        curl "-kL" "https://cdn.xaymar.com/ci/innosetup-6.1.2.exe" "-f" "--retry" "5" "-o" "inno.exe"
+        .\inno.exe /VERYSILENT /SP- /SUPPRESSMSGBOXES /NORESTART
+    - name: "StreamFX: Package"
+      shell: bash
+      run: |
+        mkdir build/package
+        cmake --build "build/temp" --config RelWithDebInfo --target PACKAGE_7Z
+        cmake --build "build/temp" --config RelWithDebInfo --target PACKAGE_ZIP
+    - name: "StreamFX: Signed Installer Preparation"
+      if: ${{ github.event_name != 'pull_request' }}
+      id: codesign_install
+      shell: bash
+      run: |
+        if [[ -f "${{ github.workspace }}/cert.pfx" ]]; then
+          signtool=$(awk 'match($0, /^;signtool=(.+)$/, ary) {print ary[1]}' "${{ github.workspace }}/build/temp/installer.iss")
+          echo "::set-output name=iscc_signtool::${signtool}"
+        fi
+    - name: "StreamFX: Package Installer"
+      shell: cmd
+      run: |
+        echo '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /V10 "/Ssigntool=${{ steps.codesign_install.outputs.iscc_signtool }} $p" ".\build\temp\installer.iss"'
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /V10 "/Ssigntool=${{ steps.codesign_install.outputs.iscc_signtool }} $p" ".\build\temp\installer.iss"
+    - name: "Artifacts"
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ matrix.id }}
+        path: build/package
 
   # macos:
   #   strategy:
